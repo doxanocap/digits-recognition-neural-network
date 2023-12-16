@@ -1,9 +1,10 @@
 import mnist_loader
 import network
-import sgd
+import rest
+import logger
 
-training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
+if __name__ == '__main__':
+    logger.initLogger()
+    nn = network.Network([784, 30, 10])
+    rest.initREST(nn)
 
-nn = network.Network([784, 15, 10])
-nnSGD = sgd.SGD(nn, training_data)
-nnSGD.RunTraining()

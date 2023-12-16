@@ -1,5 +1,6 @@
 import random
 
+import numpy
 import numpy as np
 
 import network
@@ -12,11 +13,14 @@ class SGD:
 
         self.network = nn
         self.training_data = list(training_data)
-        self.test_data = test_data
+        if test_data is not None:
+            self.test_data = list(test_data)
+        else:
+            self.test_data = test_data
 
         # default values
-        self.eta = 0.5
-        self.epochs = 100
+        self.eta = 3
+        self.epochs = 20
         self.batch_size = 10
 
     def set_learning_rate(self, eta):
@@ -28,13 +32,14 @@ class SGD:
     def set_batch_size(self, batch_size):
         self.batch_size = batch_size
 
-    def RunTraining(self):
+    def run_training(self):
         length_test = 0
         if self.test_data:
             length_test = len(self.test_data)
 
+        max_accuracy = 0
         length = len(self.training_data)
-        for i in range(2):
+        for i in range(self.epochs):
             random.shuffle(self.training_data)
             batches = [
                 self.training_data[j:j + self.batch_size]
@@ -43,13 +48,16 @@ class SGD:
             for batch in batches:
                 self.update_batch(batch)
 
+            evaluated_results = self.network.evaluate(self.test_data)
+            max_accuracy = max(max_accuracy, evaluated_results)
             if self.test_data:
                 print("Epoch {} : {} / {}".
-                      format(i, self.evaluate(self.test_data), length_test))
+                      format(i, evaluated_results, length_test))
             else:
                 print("Epoch {} complete".
                       format(i))
-
+        print("Max accuracy: {} / {}".
+              format(max_accuracy, length_test))
         self.network.save_params()
 
     def update_batch(self, batch):
@@ -67,8 +75,8 @@ class SGD:
             w - (self.eta / self.batch_size) * dw
             for w, dw in zip(self.network.weights, delta_ws)]
         self.network.biases = [
-            b - (self.eta / self.batch_size) * nb
-            for b, nb in zip(self.network.biases, delta_bs)]
+            b - (self.eta / self.batch_size) * db
+            for b, db in zip(self.network.biases, delta_bs)]
 
     def backprop(self, x, y):
         delta_ws = [np.zeros(w.shape) for w in self.network.weights]
@@ -88,20 +96,17 @@ class SGD:
             activation = network.sigmoid(z)
             activations.append(activation)
 
-        cost_delta = 2 * (activations[-1] - y) * network.sigmoid_prime(weighted_sums[-1])
+        cost_delta = (activations[-1] - y) * network.sigmoid_prime(weighted_sums[-1])
         delta_bs[-1] = cost_delta
         delta_ws[-1] = np.dot(cost_delta, activations[-2].transpose())
 
         num_layers = len(self.network.sizes)
         for i in range(2, num_layers):
-            delta_bs[-i] = network.compute_delta_b(self.network.weights[-i+1], cost_delta, activations[-i])
-            cost_delta = delta_bs[-i]
-            delta_ws[-i] = network.compute_delta_w(cost_delta, activations[-i-1])
+            sp = network.sigmoid_prime(weighted_sums[-i])
+            cost_delta = np.dot(self.network.weights[-i+1].transpose(), cost_delta) * sp
+            delta_bs[-i] = cost_delta
+            delta_ws[-i] = np.dot(cost_delta, activations[-i-1].transpose())
 
         return delta_ws, delta_bs
 
-    def evaluate(self, test_data):
-        test_results = [
-            (np.argmax(self.network.feed_forward(x)), y)
-            for (x, y) in test_data]
-        return sum(int(x == y) for (x, y) in test_results)
+
