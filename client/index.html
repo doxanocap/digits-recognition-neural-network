@@ -1,10 +1,32 @@
 <!DOCTYPE html>
+<!--Codingthai.com-->
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Drawing App</title>
+  </head>
+  <body>
+    <div class="info">
+      <img alt="." src="../data/tikz13.png">
+      <img alt="." id="image" height="300" width="300" src="../data/image.png">
+    </div>
+    <div>
+      <canvas id="canvas" width="500" height="500"></canvas>
+    <div class="toolbox">
+      <button class="toolbox_child" id="decrease">-</button>
+      <span class="toolbox_child" id="size">10</span>
+      <button class="toolbox_child" id="increase">+</button>
+      <input  value="#ffffff" class="input_box" type="color" id="color">
+       <span class="toolbox_child" id="number">0</span>
+      <div>
+        <button class="buttons" id="clear">X</button>
+        <button class="buttons" id="send">send</button>
+      </div>
+    </div>
+    </div>
+
+    <script src="index.js"></script>
+  </body>
 </html>
