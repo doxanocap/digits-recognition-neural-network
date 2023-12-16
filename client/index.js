@@ -12,8 +12,6 @@ const imageEL = document.getElementById('image')
 const ctx = canvas.getContext('2d');
 const resizerCtx = resizer.getContext('2d');
 
-numberEL.innerText = localStorage.getItem("number")
-
 let size = 10
 let isPressed = false
 colorEl.value = '#ffffff'
@@ -129,8 +127,6 @@ sendBtn.addEventListener('click', async (e) => {
             return response.json();
         })
         .then(data => {
-            
-            localStorage.setItem("number", data.number)
             numberEL.innerText = data.number
         })
         .catch(error => {
@@ -139,5 +135,6 @@ sendBtn.addEventListener('click', async (e) => {
     };
 
     img.src = canvas.toDataURL('image/png');
-    window.location.reload()
+    
+    // window.location.reload()
 })
