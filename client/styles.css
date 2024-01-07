@@ -23,10 +23,21 @@ img {
 }
 
 .info {
-  z-index: 1;
+  display: flex;
+  width: 30%;
+  flex-direction: column;
+  justify-content: start;
+  background-color: white;
+}
+
+.schema {
+    display: flex;
+  flex-direction: row;
+}
+
+.result {
   display: flex;
   flex-direction: column;
-  background-color: white;
 }
 
 .toolbox {

@@ -1,13 +1,10 @@
 import random
-
-import numpy
 import numpy as np
-
 import network
 
 
 class SGD:
-    def __init__(self, nn, training_data, test_data=None):
+    def __init__(self, nn, training_data, test_data=None, eta=3, epochs=100, batch_size=10):
         if not isinstance(nn, network.Network):
             raise TypeError("The 'network' parameter must be an instance of the Network class.")
 
@@ -48,9 +45,9 @@ class SGD:
             for batch in batches:
                 self.update_batch(batch)
 
-            evaluated_results = self.network.evaluate(self.test_data)
-            max_accuracy = max(max_accuracy, evaluated_results)
             if self.test_data:
+                evaluated_results = self.network.evaluate(self.test_data)
+                max_accuracy = max(max_accuracy, evaluated_results)
                 print("Epoch {} : {} / {}".
                       format(i, evaluated_results, length_test))
             else:
@@ -103,10 +100,8 @@ class SGD:
         num_layers = len(self.network.sizes)
         for i in range(2, num_layers):
             sp = network.sigmoid_prime(weighted_sums[-i])
-            cost_delta = np.dot(self.network.weights[-i+1].transpose(), cost_delta) * sp
+            cost_delta = np.dot(self.network.weights[-i + 1].transpose(), cost_delta) * sp
             delta_bs[-i] = cost_delta
-            delta_ws[-i] = np.dot(cost_delta, activations[-i-1].transpose())
+            delta_ws[-i] = np.dot(cost_delta, activations[-i - 1].transpose())
 
         return delta_ws, delta_bs
-
-

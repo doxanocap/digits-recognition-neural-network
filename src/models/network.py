@@ -1,7 +1,7 @@
-import os
-
 import numpy as np
+import os
 import json
+import perceptron
 
 
 def sigmoid(z):
@@ -13,18 +13,22 @@ def sigmoid_prime(z):
 
 
 class Network:
-    def __init__(self, sizes):
+    def __init__(self, sizes, model="native"):
+        self.model = model
         self.sizes = sizes
         self.storage = {}
         self.biases = []
         self.weights = []
+        self.perceptron = torch.Perceptron()
 
-        self.storage_path = "../data/storage.json"
+        self.storage_path = "../../data/storage.json"
         self.load_params()
 
-    def feed_forward(self, a):
-        for w, b in zip(self.weights, self.biases):
-            a = sigmoid(np.dot(w, a) + b)
+    def eval(self, a):
+        if self.model == "native":
+            for w, b in zip(self.weights, self.biases):
+                a = sigmoid(np.dot(w, a) + b)
+
         return a
 
     def save_params(self):
@@ -69,8 +73,5 @@ class Network:
         self.weights = [np.random.randn(y, x) for x, y in zip(self.sizes[:-1], self.sizes[1:])]
 
     def evaluate(self, test_data):
-        test_results = [
-            (np.argmax(self.feed_forward(x)), y)
-            for (x, y) in test_data]
-
+        test_results = [(np.argmax(self.eval(x)), y) for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)

@@ -8,6 +8,7 @@ const clearEl = document.getElementById('clear');
 const sendBtn = document.getElementById('send')
 const numberEL = document.getElementById('number');
 const imageEL = document.getElementById('image')
+const plotEL = document.getElementById('plot')
 
 const ctx = canvas.getContext('2d');
 const resizerCtx = resizer.getContext('2d');
@@ -98,18 +99,8 @@ sendBtn.addEventListener('click', async (e) => {
         return;
     }
 
-    const resizer = document.createElement('canvas');
-    const resizerCtx = resizer.getContext('2d');
 
-    resizer.width = 28;
-    resizer.height = 28;
-
-    const img = new Image();
-
-    img.onload = () => {
-        resizerCtx.drawImage(img, 0, 0, 28, 28);
-
-        const resizedImageBase64 = resizer.toDataURL().split(';base64,')[1];
+        const imageBase64 = canvas.toDataURL().split(';base64,')[1];
 
         fetch('http://localhost:8000/image', {
             method: 'POST',
@@ -117,7 +108,7 @@ sendBtn.addEventListener('click', async (e) => {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                base64: resizedImageBase64,
+                base64: imageBase64,
             }),
         })
         .then(response => {
@@ -127,14 +118,12 @@ sendBtn.addEventListener('click', async (e) => {
             return response.json();
         })
         .then(data => {
+            console.log(data)
             numberEL.innerText = data.number
+            imageEL.setAttribute("src", `../data/tests/image${data.img_id}.png`)
+            plotEL.setAttribute("src", `../data/tests/plot${data.img_id}.png`)
         })
         .catch(error => {
             console.error('Error:', error);
         });
-    };
-
-    img.src = canvas.toDataURL('image/png');
-    
-    // window.location.reload()
 })

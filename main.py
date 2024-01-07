@@ -1,7 +1,5 @@
-import mnist_loader
-import network
-import rest
-import logger
+from src import rest
+from src.utils import logger
 
 if __name__ == '__main__':
     logger.initLogger()
