@@ -6,12 +6,10 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from PIL import Image
-from io import BytesIO
-import matplotlib.pyplot as plt
+from src.models import network
 
 app = FastAPI()
-network = sgd.Network
+model = network.Network
 image_title = "curr"
 
 app.add_middleware(
@@ -33,34 +31,15 @@ class ErrorResponse(BaseModel):
 
 @app.post("/image")
 async def process_image(image_request: ImageRequest):
-    global network, image_title
+    global model, image_title
     try:
         image_bytes = base64.b64decode(image_request.base64)
 
-        image = Image.open(BytesIO(image_bytes))
-        image = image.convert('L')
-
-        image_title = "curr" if image_title == "curr" else "prev"
-        resized_image = image.resize((28, 28))
-        resized_image.save("../data/tests/image-" + image_title + ".png", "PNG")
-
-        image_data = np.asarray(resized_image)
-        flattened_image = image_data.reshape(-1, 1)
-
-        output = network.eval(flattened_image)
-        percentages = [v[0] * 100 / float(np.sum(output)) for v in output]
-
-        plt.bar(range(10), percentages, color="blue")
-        plt.xticks(range(1, 11))
-        plt.xlabel("number")
-        plt.ylabel("similarity")
-
-        plt.savefig(f"../data/tests/plot{image_title}.png", format="png")
-        plt.clf()
+        output, image_id = model.evaluate_img(image_bytes)
 
         return {
-            "number": int(np.argmax(output)),
-            "image_title": image_title
+            "number": output,
+            "image_id": image_id
         }
 
     except Exception as e:
@@ -74,7 +53,7 @@ async def options_image():
     return {"message": "OPTIONS request received. Please use POST method for image upload."}
 
 
-def initREST(model):
-    global network, image_title
-    network = model
-    uvicorn.run("rest:app", host="0.0.0.0", port=8000, reload=False)
+def run(init_model):
+    global model, image_title
+    model = init_model
+    uvicorn.run("src.rest:app", host="0.0.0.0", port=8000, reload=False)

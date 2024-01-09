@@ -1,8 +1,9 @@
 from src import rest
 from src.utils import logger
+from src.models import network
 
 if __name__ == '__main__':
     logger.initLogger()
-    nn = network.Network([784, 30, 10])
-    rest.initREST(nn)
+    model = network.Network(model_type="pytorch")
+    rest.run(model)
 

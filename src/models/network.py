@@ -1,7 +1,11 @@
 import numpy as np
 import os
 import json
-import perceptron
+from . import perceptron
+from PIL import Image
+from io import BytesIO
+import matplotlib.pyplot as plt
+import torch
 
 
 def sigmoid(z):
@@ -13,23 +17,55 @@ def sigmoid_prime(z):
 
 
 class Network:
-    def __init__(self, sizes, model="native"):
-        self.model = model
-        self.sizes = sizes
-        self.storage = {}
-        self.biases = []
-        self.weights = []
-        self.perceptron = torch.Perceptron()
+    def __init__(self, sizes=None, model_type="native"):
+        if sizes is None:
+            sizes = [784, 30, 10]
+        self.model_type = model_type
+        self.image_id = 0
 
-        self.storage_path = "../../data/storage.json"
-        self.load_params()
+        if self.model_type == "pytorch":
+            model = perceptron.load_model("./data/torch_model.txt")
+            self.model = model
+        else:
+            self.sizes = sizes
+            self.storage = {}
+            self.biases = []
+            self.weights = []
+            self.storage_path = "./data/storage.json"
+            self.load_params()
 
-    def eval(self, a):
-        if self.model == "native":
+    def evaluate_img(self, image_bytes):
+        image = Image.open(BytesIO(image_bytes))
+        image = image.convert('L')
+
+        self.image_id += 1
+        resized_image = image.resize((28, 28))
+        resized_image.save("./data/tests/image" + str(self.image_id) + ".png", "PNG")
+
+        rg = 10
+        if self.model_type == "native":
+            image_data = np.asarray(resized_image)
+            a = image_data.reshape(-1, 1)
             for w, b in zip(self.weights, self.biases):
                 a = sigmoid(np.dot(w, a) + b)
+            percentages_list = [v[0] * 100 / float(np.sum(a)) for v in a]
+            y_pred = int(np.argmax(a))
+        else:
+            rg = 11
+            output = self.model.evaluate_img(resized_image)
+            probabilities = torch.softmax(output, dim=1)
+            percentages_list = (probabilities * 100).squeeze().tolist()
+            _, y = output.max(1)
+            y_pred = y.item()
 
-        return a
+        plt.bar(range(rg), percentages_list, color="blue")
+        plt.xticks(range(0, rg))
+        plt.xlabel("number")
+        plt.ylabel("similarity")
+
+        plt.savefig(f"./data/tests/plot{self.image_id}.png", format="png")
+        plt.clf()
+        return y_pred, self.image_id
 
     def save_params(self):
         current_params = {

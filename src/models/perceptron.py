@@ -1,24 +1,15 @@
-import matplotlib.pyplot as plt
-from matplotlib import gridspec
-import seaborn as sns
-import pandas as pd
 from tqdm.notebook import tqdm
-
-from scipy.special import expit
-import numpy as np
-import perceptron
-import os
-import random
-import tensorflow as tf
-
-from sklearn.linear_model import (LogisticRegression, LinearRegression)
-from sklearn.model_selection import LeaveOneOut, KFold
-from sklearn.metrics import classification_report
-from sklearn.model_selection import ParameterGrid
-
-from torchvision import datasets
-from torchvision import transforms
 import torch
+from torchvision import transforms
+
+
+def load_model(path):
+    model = Perceptron(num_layers=2, output_dim=11, p=0.3, hidden_dim=128)
+    model.load_state_dict(torch.load(path))
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    return model
 
 
 class Perceptron(torch.nn.Module):
@@ -44,5 +35,45 @@ class Perceptron(torch.nn.Module):
         self.layers.add_module('classifier',
                                torch.nn.Linear(prev_size, output_dim))
 
-    def forward(self, input_d):
-        return self.layers(input_d)
+    def evaluate_img(self, img):
+        toTensor = transforms.ToTensor()
+        tensor_img = toTensor(img)
+        x = tensor_img.view(1, -1)
+        output = self.layers(x)
+        return output
+
+    def forward(self, y):
+        return self.layers(y)
+
+    def run_training(self, dataset, loss_function=None, optimizer=None, lr=0.001, momentum=0.9, epochs=10):
+        if loss_function is None:
+            loss_function = torch.nn.CrossEntropyLoss()
+        if optimizer is None:
+            optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+
+        for epoch in tqdm(range(epochs), leave=False):
+            generator = torch.utils.data.DataLoader(dataset, batch_size=64,
+                                                    shuffle=True)
+            for x, y in tqdm(generator, leave=False):
+                optimizer.zero_grad()
+                x = x.view([-1, 784]).to(self.device())
+                y = y.to(self.device())
+
+                output = self(x)
+                loss = loss_function(output, y)
+                loss.backward()
+                optimizer.step()
+
+        torch.save(self.state_dict(), './torch_model.txt')
+
+    def run_testing(self, dataset):
+        generator = torch.utils.data.DataLoader(dataset, batch_size=64)
+
+        pred = []
+        real = []
+        for x, y in generator:
+            x = x.view([-1, 784]).to(self.device())
+            y = y.to(self.device())
+
+            pred.extend(torch.argmax(self(x), dim=-1).cpu().numpy().tolist())
+            real.extend(y.cpu().numpy().tolist())

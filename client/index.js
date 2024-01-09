@@ -99,31 +99,31 @@ sendBtn.addEventListener('click', async (e) => {
         return;
     }
 
+    const imageBase64 = canvas.toDataURL().split(';base64,')[1];
 
-        const imageBase64 = canvas.toDataURL().split(';base64,')[1];
-
-        fetch('http://localhost:8000/image', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                base64: imageBase64,
-            }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(data)
-            numberEL.innerText = data.number
-            imageEL.setAttribute("src", `../data/tests/image${data.img_id}.png`)
-            plotEL.setAttribute("src", `../data/tests/plot${data.img_id}.png`)
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
+    fetch('http://localhost:8000/image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            base64: imageBase64,
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data)
+        if (data.number === 10) data.number = NaN
+        numberEL.innerText = data.number
+        imageEL.setAttribute("src", `../data/tests/image${data.image_id}.png`)
+        plotEL.setAttribute("src", `../data/tests/plot${data.image_id}.png`)
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
 })
